@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>数の単位</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+        
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #1a1c20;
+            color: white;
+            font-family: 'Noto Sans JP', sans-serif;
+            transition: background-color 2s ease;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            position: relative;
+        }
+        .power {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: translateY(-20px);
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+            position: relative;
+        }
+        .number {
+            font-size: 6rem;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(255,255,255,0.4);
+            position: relative;
+        }
+        .furigana {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            color: #aaa;
+            position: relative;
+        }
+        .type {
+            font-size: 1.4rem;
+            color: #4ECDC4;
+            margin-bottom: 2rem;
+            opacity: 0;
+            position: relative;
+        }
+        .instruction {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 1.2rem;
+            opacity: 0.7;
+            background: rgba(0,0,0,0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .instruction::after {
+            content: '→';
+            animation: pulse 1.5s infinite;
+        }
+        .animate-in {
+            animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .animate-out {
+            animation: fadeOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            background: white;
+            border-radius: 50%;
+            animation: particle 1s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.9);
+            }
+        }
+        @keyframes particle {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+        @keyframes pulse {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #4ECDC4; }
+            to { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #4ECDC4; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="power" id="power"></div>
+        <div class="number" id="number"></div>
+        <div class="furigana" id="furigana"></div>
+        <div class="type" id="type"></div>
+    </div>
+    <div class="instruction">Press Enter</div>
+
+    <script>
+        const numbers = [
+            {power: 1, name: "一", furigana: "いち"},
+            {power: 10, name: "十", furigana: "じゅう"},
+            {power: 100, name: "百", furigana: "ひゃく"},
+            {power: 1000, name: "千", furigana: "せん"},
+            {power: 10000, name: "万", furigana: "まん"},
+            {power: "10^7", name: "倶胝", furigana: "くてい", type: "華厳経命数"},
+            {power: 100000000, name: "億", furigana: "おく"},
+            {power: "10^14", name: "阿ゆ多", furigana: "あゆた", type: "華厳経命数"},
+            {power: 1000000000000, name: "兆", furigana: "ちょう"},
+            {power: "10^16", name: "京", furigana: "けい"},
+            {power: "10^20", name: "垓", furigana: "がい"},
+            {power: "10^24", name: "秭", furigana: "じょ"},
+            {power: "10^28", name: "穰・那由他", furigana: "じょう・なゆた", type: "標準・華厳経命数"},
+            {power: "10^32", name: "溝", furigana: "こう"},
+            {power: "10^36", name: "澗", furigana: "かん"},
+            {power: "10^40", name: "正", furigana: "せい"},
+            {power: "10^44", name: "載", furigana: "さい"},
+            {power: "10^48", name: "極", furigana: "ごく"},
+            {power: "10^52", name: "恒河沙", furigana: "ごうがしゃ"},
+            {power: "10^56", name: "阿僧祇・頻波羅", furigana: "あそうぎ・びんばら", type: "標準・華厳経命数"},
+            {power: "10^60", name: "那由他", furigana: "なゆた"},
+            {power: "10^64", name: "不可思議", furigana: "ふかしぎ"},
+            {power: "10^68", name: "無量大数", furigana: "むりょうたいすう"},
+            {power: "10^112", name: "矜羯羅", furigana: "こんがら", type: "華厳経命数"},
+            {power: "10^224", name: "阿伽羅", furigana: "あから", type: "華厳経命数"},
+            {power: "10^448", name: "最勝", furigana: "さいしょう", type: "華厳経命数"},
+            {power: "10^896", name: "摩婆羅", furigana: "まばら", type: "華厳経命数"},
+            {power: "10^1792", name: "阿婆羅", furigana: "あばら", type: "華厳経命数"},
+            {power: "10^3584", name: "多婆羅", furigana: "たばら", type: "華厳経命数"},
+            {power: "10^7168", name: "界分", furigana: "かいぶん", type: "華厳経命数"},
+            {power: "10^14336", name: "普摩", furigana: "ふま", type: "華厳経命数"},
+            {power: "10^28672", name: "禰摩", furigana: "ねま", type: "華厳経命数"},
+            {power: "10^57344", name: "阿婆詹", furigana: "あばけん", type: "華厳経命数"},
+            {power: "10^114688", name: "弥伽婆", furigana: "みかば", type: "華厳経命数"},
+            {power: "10^229376", name: "毘ら伽", furigana: "びらか", type: "華厳経命数"},
+            {power: "10^458752", name: "毘伽婆", furigana: "びかば", type: "華厳経命数"},
+            {power: "10^917504", name: "僧羯邏摩", furigana: "そうがらま", type: "華厳経命数"},
+            {power: "10^1835008", name: "毘薩羅", furigana: "びさら", type: "華厳経命数"},
+            {power: "10^3670016", name: "毘贍婆", furigana: "びせんば", type: "華厳経命数"},
+            {power: "10^7340032", name: "毘盛伽", furigana: "びじょうが", type: "華厳経命数"},
+            {power: "10^14680064", name: "毘素陀", furigana: "びすだ", type: "華厳経命数"},
+            {power: "10^29360128", name: "毘婆訶", furigana: "びばか", type: "華厳経命数"},
+            {power: "10^58720256", name: "毘薄底", furigana: "びばてい", type: "華厳経命数"},
+            {power: "10^117440512", name: "毘きゃ擔", furigana: "びきゃたん", type: "華厳経命数"},
+            {power: "10^234881024", name: "称量", furigana: "しょうりょう", type: "華厳経命数"},
+            {power: "10^469762048", name: "一持", furigana: "いちじ", type: "華厳経命数"},
+            {power: "10^939524096", name: "異路", furigana: "いろ", type: "華厳経命数"},
+            {power: "10^1879048192", name: "顛倒", furigana: "てんどう", type: "華厳経命数"},
+            {power: "10^3758096384", name: "三末耶", furigana: "さんまや", type: "華厳経命数"},
+            {power: "10^7516192768", name: "毘睹羅", furigana: "びとら", type: "華厳経命数"},
+            {power: "10^15032385536", name: "奚婆羅", furigana: "けいばら", type: "華厳経命数"},
+            {power: "10^30064771072", name: "伺察", furigana: "しさつ", type: "華厳経命数"},
+            {power: "10^60129542144", name: "周広", furigana: "しゅうこう", type: "華厳経命数"},
+            {power: "10^120259084288", name: "高出", furigana: "こうしゅつ", type: "華厳経命数"},
+            {power: "10^240518168576", name: "最妙", furigana: "さいみょう", type: "華厳経命数"},
+            {power: "10^481036337152", name: "泥羅婆", furigana: "ないらば", type: "華厳経命数"},
+            {power: "10^962072674304", name: "訶理婆", furigana: "かりば", type: "華厳経命数"},
+            {power: "10^不可説", name: "不可説", furigana: "ふかせつ", type: "華厳経命数"},
+            {power: "10^不可説転", name: "不可説転", furigana: "ふかせつてん", type: "華厳経命数"},
+            {power: "10^不可説不可説", name: "不可説不可説", furigana: "ふかせつふかせつ", type: "華厳経命数"},
+            {power: "10^不可説不可説転", name: "不可説不可説転", furigana: "ふかせつふかせつてん", type: "華厳経命数"}
+        ];
+
+        let currentIndex = 0;
+        const powerElement = document.getElementById('power');
+        const numberElement = document.getElementById('number');
+        const furiganaElement = document.getElementById('furigana');
+        const typeElement = document.getElementById('type');
+
+        function createParticles(element) {
+            const rect = element.getBoundingClientRect();
+            const particleCount = 20;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random size between 2 and 6 pixels
+                const size = Math.random() * 4 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random starting position near the element
+                const x = rect.left + rect.width * Math.random();
+                const y = rect.top + rect.height * Math.random();
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                
+                // Random movement direction
+                const tx = (Math.random() - 0.5) * 200;
+                const ty = (Math.random() - 0.5) * 200;
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 1000);
+            }
+        }
+
+        function updateDisplay() {
+            const currentNumber = numbers[currentIndex];
+            
+            // Background color transition based on index
+            const hue = (currentIndex / numbers.length) * 360;
+            document.body.style.backgroundColor = `hsl(${hue}, 40%, 15%)`;
+
+           // Animate out current content
+            [powerElement, numberElement, furiganaElement, typeElement].forEach(el => {
+                el.classList.add('animate-out');
+            });
+
+            setTimeout(() => {
+                // Update content
+                powerElement.textContent = currentNumber.power;
+                numberElement.textContent = currentNumber.name;
+                furiganaElement.textContent = currentNumber.furigana;
+                typeElement.textContent = currentNumber.type || "標準的な数詞";
+
+                // Remove previous animations
+                [powerElement, numberElement, furiganaElement, typeElement].forEach(el => {
+                    el.classList.remove('animate-out');
+                    el.classList.remove('animate-in');
+                    el.classList.remove('glow');
+                    void el.offsetWidth; // Trigger reflow
+                });
+
+                // Add new animations
+                [powerElement, numberElement, furiganaElement, typeElement].forEach(el => {
+                    el.classList.add('animate-in');
+                });
+
+                // Add glow effect to large numbers
+                if (typeof currentNumber.power === 'string' && 
+                    currentNumber.power.startsWith('10^') && 
+                    parseInt(currentNumber.power.slice(3)) > 1000000) {
+                    numberElement.classList.add('glow');
+                }
+
+                // Create particle effects
+                createParticles(numberElement);
+
+            }, 800);
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                currentIndex = (currentIndex + 1) % numbers.length;
+                updateDisplay();
+            }
+        }
+
+        document.addEventListener('keypress', handleKeyPress);
+
+        // Initial display
+        updateDisplay();
+    </script>
+</body>
+</html>
